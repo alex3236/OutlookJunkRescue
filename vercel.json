@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/subscriptions/renew-all",
-      "schedule": "*/10 * * * *"
+      "schedule": "40 5 * * *"
     }
   ]
 }

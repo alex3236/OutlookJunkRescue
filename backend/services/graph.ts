@@ -31,7 +31,7 @@ export async function createJunkSubscription() {
   }
 
   const cert = await ensureActiveWebhookCertificate();
-  const expiration = new Date(Date.now() + 45 * 60 * 1000).toISOString();
+  const expiration = new Date(Date.now() + 1440 * 60 * 1000).toISOString();
 
   return graphRequest<any>({
     method: 'POST',
