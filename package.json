@@ -1,0 +1,45 @@
+{
+  "name": "outlook-rescue",
+  "version": "0.1.0",
+  "description": "Outlook Junk Rescue",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "smoke": "tsx scripts/smoke.ts",
+    "renew:once": "tsx scripts/renew.ts",
+    "renew:loop": "node scripts/renew-loop.js"
+  },
+  "keywords": [],
+  "homepage": "https://github.com/alex3236/OutlookJunkRescue",
+  "author": {
+    "name": "Alex3236",
+    "url": "https://alex3236.moe"
+  },
+  "license": "LGPL-3.0-or-later",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@elysiajs/eden": "^1.3.1",
+    "@elysiajs/openapi": "^1.3.0",
+    "@sinclair/typebox": "^0.34.40",
+    "axios": "^1.14.0",
+    "elysia": "^1.3.21",
+    "next": "^15.3.0",
+    "openapi-types": "^12.1.3",
+    "pg": "^8.16.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "selfsigned": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

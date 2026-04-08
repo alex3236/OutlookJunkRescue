@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/subscriptions/renew-all",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
+

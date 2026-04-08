@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: outlook-rescue-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: outlook_rescue
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d outlook_rescue"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: outlook-rescue-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/outlook_rescue
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  renew:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: outlook-rescue-renew
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_INTERNAL_URL: http://app:3000
+      RENEW_INTERVAL_SECONDS: 600
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/outlook_rescue
+    command: ["node", "scripts/renew-loop.js"]
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+
