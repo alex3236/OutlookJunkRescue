@@ -8,6 +8,28 @@ const MAX_LAST_NOTIFICATIONS = 50;
 let pool: Pool | null = null;
 let initPromise: Promise<void> | null = null;
 
+function buildPoolConfig() {
+  const url = new URL(env.databaseUrl);
+  const sslmode = url.searchParams.get('sslmode')?.toLowerCase() ?? null;
+  url.searchParams.delete('sslmode');
+
+  let ssl: false | true | { rejectUnauthorized: boolean } | undefined;
+  if (/neon\.tech/i.test(env.databaseUrl)) {
+    ssl = {rejectUnauthorized: false};
+  } else if (sslmode === 'disable') {
+    ssl = false;
+  } else if (sslmode === 'require') {
+    ssl = {rejectUnauthorized: false};
+  } else if (sslmode === 'prefer' || sslmode === 'verify-ca' || sslmode === 'verify-full') {
+    ssl = true;
+  }
+
+  return {
+    connectionString: url.toString(),
+    ssl,
+  };
+}
+
 function sanitizeJson(value: unknown) {
   if (value === undefined) return null;
   try {
@@ -52,10 +74,7 @@ function toDbExtra(level: LogLevel, message: string, extra: unknown) {
 
 function getPool() {
   if (pool) return pool;
-  const ssl = /neon\.tech/i.test(env.databaseUrl) || /sslmode=require/i.test(env.databaseUrl)
-    ? {rejectUnauthorized: false}
-    : undefined;
-  pool = new Pool({connectionString: env.databaseUrl, ssl});
+  pool = new Pool(buildPoolConfig());
   return pool;
 }
 
