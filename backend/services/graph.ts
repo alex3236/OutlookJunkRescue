@@ -12,7 +12,7 @@ export async function graphRequest<T>(config: AxiosRequestConfig): Promise<T> {
       ...(config.headers || {}),
       Authorization: `Bearer ${token}`,
     },
-    timeout: config.timeout || 120000,
+    timeout: config.timeout || 20000,
   });
 
   return response.data as T;
@@ -81,6 +81,7 @@ export async function moveMessageToInbox(messageId: string) {
     url: `${graphBase}/me/messages/${encodeURIComponent(messageId)}/move`,
     data: {destinationId: 'inbox'},
     headers: {'Content-Type': 'application/json'},
+    timeout: 60000
   });
 }
 
