@@ -38,7 +38,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="card" style={{ maxWidth: 460, margin: '80px auto' }}>
-      <h1 style={{ marginTop: 0 }}>Outlook Rescue</h1>
+      <h1 style={{ marginTop: 0 }}>Outlook Junk Rescue</h1>
       <label htmlFor="password"><p className="muted">请输入面板密码。</p></label>
       <input
         id="password"

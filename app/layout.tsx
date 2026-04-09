@@ -2,13 +2,13 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Outlook Rescue',
-  description: 'Outlook junk rescue dashboard powered by Next.js + Elysia',
+  title: 'Outlook Junk Rescue',
+  description: 'A tool to help recover emails mistakenly marked as junk in Outlook.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );
