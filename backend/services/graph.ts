@@ -12,7 +12,7 @@ export async function graphRequest<T>(config: AxiosRequestConfig): Promise<T> {
       ...(config.headers || {}),
       Authorization: `Bearer ${token}`,
     },
-    timeout: config.timeout || 20000,
+    timeout: config.timeout || 120000,
   });
 
   return response.data as T;
@@ -76,27 +76,11 @@ export async function listJunkMessages(top = 20) {
 }
 
 export async function moveMessageToInbox(messageId: string) {
-  const token = await getValidAccessToken();
-
-  const response = await axios({
+  return graphRequest<any>({
     method: 'POST',
     url: `${graphBase}/me/messages/${encodeURIComponent(messageId)}/move`,
     data: {destinationId: 'inbox'},
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    timeout: 20000,
-    responseType: 'stream',
-    validateStatus: () => true,
+    headers: {'Content-Type': 'application/json'},
   });
-
-  try {
-    if (response.status !== 201) {
-      throw new Error(`Unexpected status code ${response.status} when moving message to inbox.`);
-    }
-  } finally {
-    response.data?.destroy?.();
-  }
 }
 

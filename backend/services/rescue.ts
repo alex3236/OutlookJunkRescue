@@ -192,18 +192,19 @@ async function moveByMessageId(messageId: string, details?: {
     return {skipped: true, reason: 'already_processed', messageId};
   }
 
-  await moveMessageToInbox(messageId);
-  const sender = details?.sender || null;
-  const subject = details?.subject || null;
+  const moved = await moveMessageToInbox(messageId);
+  const sender = details?.sender || pickSender(moved?.from);
+  const subject = details?.subject || moved?.subject;
   await rememberProcessedMessage(messageId);
   await appendLog('info', 'Moved message from Junk to Inbox', {
     messageId,
+    newId: moved.id,
     sender,
     subject,
     receivedDateTime: details?.receivedDateTime || null,
   });
 
-  return {skipped: false, messageId, sender, subject};
+  return {skipped: false, moved};
 }
 
 export async function handleWebhookPayload(payload: any) {
@@ -257,14 +258,15 @@ export async function reconcileRecentJunkMessages(limit = 20) {
     if (!msg.id || (await wasProcessedRecently(msg.id))) continue;
 
     try {
-      await moveMessageToInbox(msg.id);
-      const sender = pickSender(msg?.from);
+      const result = await moveMessageToInbox(msg.id);
+      const sender = pickSender(msg?.from) || pickSender(result?.from);
       await rememberProcessedMessage(msg.id);
-      moved.push({oldId: msg.id, sender, subject: msg.subject});
+      moved.push({oldId: msg.id, newId: result.id, sender, subject: result.subject || msg.subject});
       await appendLog('info', 'Moved message from Junk to Inbox', {
         messageId: msg.id,
+        newId: result.id,
         sender,
-        subject: msg.subject,
+        subject: result.subject || msg.subject,
       });
     } catch (error: any) {
       await appendLog('error', 'Failed to reconcile junk message', {
