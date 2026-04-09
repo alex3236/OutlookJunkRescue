@@ -1,11 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { X509Certificate } from 'node:crypto';
+import { randomUUID, X509Certificate } from 'node:crypto';
 import selfsigned from 'selfsigned';
 import { nowIso } from '@/backend/utils/time';
-import {
-  getGraphWebhookCertificateState,
-  saveGraphWebhookCertificateState,
-} from '@/backend/services/store';
+import { getGraphWebhookCertificateState, saveGraphWebhookCertificateState, } from '@/backend/services/store';
 import type { GraphWebhookCertificate } from '@/backend/types/store';
 
 const CERT_VALID_DAYS = Number(process.env.GRAPH_CERT_VALID_DAYS || 3650);
@@ -22,7 +18,7 @@ function normalizeCertToBase64(pem: string) {
 }
 
 function createCertificate(): GraphWebhookCertificate {
-  const attrs = [{ name: 'commonName', value: 'outlook-rescue-graph-webhook' }];
+  const attrs = [{name: 'commonName', value: 'outlook-rescue-graph-webhook'}];
   const pems = selfsigned.generate(attrs, {
     algorithm: 'sha256',
     keySize: 2048,
@@ -52,7 +48,7 @@ export async function ensureActiveWebhookCertificate() {
 
   if (!state?.active) {
     const active = createCertificate();
-    await saveGraphWebhookCertificateState({ active, previous: [] });
+    await saveGraphWebhookCertificateState({active, previous: []});
     return active;
   }
 
@@ -62,7 +58,7 @@ export async function ensureActiveWebhookCertificate() {
 
   const renewed = createCertificate();
   const previous = [state.active, ...(state.previous || [])].slice(0, MAX_OLD_CERTS);
-  await saveGraphWebhookCertificateState({ active: renewed, previous });
+  await saveGraphWebhookCertificateState({active: renewed, previous});
   return renewed;
 }
 

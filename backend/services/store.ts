@@ -1,8 +1,8 @@
-import {randomUUID} from 'node:crypto';
-import {Pool} from 'pg';
-import {env} from '@/backend/config/env';
-import {nowIso} from '@/backend/utils/time';
-import type {GraphWebhookCertificateState, LogLevel, StoreSchema} from '@/backend/types/store';
+import { randomUUID } from 'node:crypto';
+import { Pool } from 'pg';
+import { env } from '@/backend/config/env';
+import { nowIso } from '@/backend/utils/time';
+import type { GraphWebhookCertificateState, LogLevel, StoreSchema } from '@/backend/types/store';
 
 const MAX_LAST_NOTIFICATIONS = 50;
 let pool: Pool | null = null;

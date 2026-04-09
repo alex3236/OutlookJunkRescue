@@ -25,8 +25,8 @@ const oauthStateCookie = 'oauth_state';
 const sessionCookie = sessionCookieName();
 
 const authenticatedSecurity: Record<string, string[]>[] = [
-  { BearerAuth: [] },
-  { SessionCookieAuth: [] },
+  {BearerAuth: []},
+  {SessionCookieAuth: []},
 ];
 
 const protectedRouteDetail = {
@@ -86,7 +86,7 @@ function assertAuthorized(request: Request) {
   }
 }
 
-export const app = new Elysia({ prefix: '/api' })
+export const app = new Elysia({prefix: '/api'})
   .use(
     openapi({
       documentation: {
@@ -139,12 +139,12 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
           `.trim(),
         },
         tags: [
-          { name: 'System', description: '健康检查与系统状态' },
-          { name: 'Auth', description: '密码登录、登出与 Outlook OAuth 绑定' },
-          { name: 'Subscriptions', description: 'Microsoft Graph 订阅管理' },
-          { name: 'Junk', description: '垃圾箱查询与整理' },
-          { name: 'Webhook', description: 'Microsoft Graph webhook 回调' },
-          { name: 'Logs', description: '运行日志' },
+          {name: 'System', description: '健康检查与系统状态'},
+          {name: 'Auth', description: '密码登录、登出与 Outlook OAuth 绑定'},
+          {name: 'Subscriptions', description: 'Microsoft Graph 订阅管理'},
+          {name: 'Junk', description: '垃圾箱查询与整理'},
+          {name: 'Webhook', description: 'Microsoft Graph webhook 回调'},
+          {name: 'Logs', description: '运行日志'},
         ],
         security: authenticatedSecurity,
         components: {
@@ -165,7 +165,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       },
     }),
   )
-  .get('/health', () => ({ ok: true, ts: new Date().toISOString() }), {
+  .get('/health', () => ({ok: true, ts: new Date().toISOString()}), {
     detail: {
       tags: ['System'],
       summary: '健康检查',
@@ -175,21 +175,21 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
   })
   .post(
     '/auth/login',
-    async ({ body, set }) => {
+    async ({body, set}) => {
       if (body.password !== env.appPassword) {
         return new Response(
-          JSON.stringify({ ok: false, code: 'INVALID_PASSWORD', message: 'Password is incorrect.' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } },
+          JSON.stringify({ok: false, code: 'INVALID_PASSWORD', message: 'Password is incorrect.'}),
+          {status: 401, headers: {'Content-Type': 'application/json'}},
         );
       }
 
       set.headers['set-cookie'] = setCookie(sessionCookie, createPasswordToken(body.password), 60 * 60 * 8);
       await appendLog('info', 'Dashboard password login success');
-      return { ok: true };
+      return {ok: true};
     },
     {
       body: t.Object({
-        password: t.String({ minLength: 1, description: 'Dashboard password / APP_PASSWORD' }),
+        password: t.String({minLength: 1, description: 'Dashboard password / APP_PASSWORD'}),
       }),
       detail: {
         tags: ['Auth'],
@@ -199,9 +199,9 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       },
     },
   )
-  .post('/auth/logout', ({ set }) => {
+  .post('/auth/logout', ({set}) => {
     set.headers['set-cookie'] = clearCookie(sessionCookie);
-    return { ok: true };
+    return {ok: true};
   }, {
     detail: {
       ...protectedRouteDetail,
@@ -210,17 +210,17 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '清除 Dashboard Session Cookie。',
     },
   })
-  .get('/auth/oauth/login', ({ request, set }) => {
+  .get('/auth/oauth/login', ({request, set}) => {
     try {
       assertAuthorized(request);
     } catch {
-      return new Response(JSON.stringify({ code: 'UNAUTHORIZED', message: 'Please login first.' }), {
+      return new Response(JSON.stringify({code: 'UNAUTHORIZED', message: 'Please login first.'}), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
       });
     }
 
-    const { state, url } = buildAuthUrl();
+    const {state, url} = buildAuthUrl();
     set.headers['set-cookie'] = setCookie(oauthStateCookie, toSignedValue(state), 10 * 60);
     return Response.redirect(url, 302);
   }, {
@@ -231,7 +231,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '生成 state，写入临时 Cookie，并重定向到 Microsoft 授权页面。',
     },
   })
-  .get('/auth/oauth/callback', async ({ query, request, set }) => {
+  .get('/auth/oauth/callback', async ({query, request, set}) => {
     try {
       const cookies = parseCookieHeader(request.headers.get('cookie'));
       const stateFromCookie = fromSignedValue(cookies.get(oauthStateCookie));
@@ -281,7 +281,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '处理 Microsoft 回调，校验 state，交换 token，并保存 OAuth 信息。',
     },
   })
-  .get('/status', async ({ request }) => {
+  .get('/status', async ({request}) => {
     assertAuthorized(request);
     return getStatus();
   }, {
@@ -292,7 +292,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '返回当前服务状态、OAuth 状态和基础运行信息。',
     },
   })
-  .get('/logs', async ({ request }) => {
+  .get('/logs', async ({request}) => {
     assertAuthorized(request);
     return getLogs();
   }, {
@@ -303,7 +303,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '返回最近的系统日志，用于排障和审计。',
     },
   })
-  .get('/subscriptions', async ({ request }) => {
+  .get('/subscriptions', async ({request}) => {
     assertAuthorized(request);
     return getSubscriptions();
   }, {
@@ -314,7 +314,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '返回当前保存的 Microsoft Graph 订阅列表。',
     },
   })
-  .post('/subscriptions/create', async ({ request }) => {
+  .post('/subscriptions/create', async ({request}) => {
     assertAuthorized(request);
     return createSubscriptionAndPersist();
   }, {
@@ -325,7 +325,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '创建新的 Microsoft Graph 订阅并持久化保存。',
     },
   })
-  .post('/auth/oauth/logout', async ({ request }) => {
+  .post('/auth/oauth/logout', async ({request}) => {
     assertAuthorized(request);
     return disconnectOutlookAndPersist();
   }, {
@@ -336,7 +336,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '断开 Outlook OAuth 绑定，并尝试删除已保存的订阅。',
     },
   })
-  .post('/subscriptions/renew-all', async ({ request }) => {
+  .post('/subscriptions/renew-all', async ({request}) => {
     assertAuthorized(request);
     return renewAllAndPersist();
   }, {
@@ -347,7 +347,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '对全部已有订阅发起续订，并同步持久化结果。',
     },
   })
-  .get('/subscriptions/renew-all', async ({ request }) => {
+  .get('/subscriptions/renew-all', async ({request}) => {
     assertAuthorized(request);
     return renewAllAndPersist();
   }, {
@@ -358,7 +358,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '兼容脚本或临时调用场景的 GET 版本。',
     },
   })
-  .post('/subscriptions/renew/:id', async ({ request, params }) => {
+  .post('/subscriptions/renew/:id', async ({request, params}) => {
     assertAuthorized(request);
     return renewOneAndPersist(params.id);
   }, {
@@ -369,7 +369,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '按订阅 ID 续订指定订阅并更新持久化记录。',
     },
   })
-  .get('/junk', async ({ request }) => {
+  .get('/junk', async ({request}) => {
     assertAuthorized(request);
     return listJunk(20);
   }, {
@@ -380,10 +380,10 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '返回最近一批垃圾邮件记录，默认最多 20 条。',
     },
   })
-  .post('/reconcile', async ({ request }) => {
+  .post('/reconcile', async ({request}) => {
     assertAuthorized(request);
     const moved = await reconcileRecentJunkMessages(20);
-    return { movedCount: moved.length, moved };
+    return {movedCount: moved.length, moved};
   }, {
     detail: {
       ...protectedRouteDetail,
@@ -392,13 +392,13 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '检查最近垃圾邮件并执行整理逻辑，返回移动数量和明细。',
     },
   })
-  .get('/webhook', async ({ query }) => {
+  .get('/webhook', async ({query}) => {
     const token = query.validationToken;
     if (typeof token === 'string' && token.length > 0) {
-      await appendLog('info', 'Webhook validation via GET', { validationToken: token });
-      return new Response(token, { status: 200, headers: { 'Content-Type': 'text/plain' } });
+      await appendLog('info', 'Webhook validation via GET', {validationToken: token});
+      return new Response(token, {status: 200, headers: {'Content-Type': 'text/plain'}});
     }
-    return { ok: true };
+    return {ok: true};
   }, {
     detail: {
       tags: ['Webhook'],
@@ -407,11 +407,11 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '供 Microsoft Graph 在订阅验证阶段回显 validationToken。',
     },
   })
-  .post('/webhook', async ({ query, body }) => {
+  .post('/webhook', async ({query, body}) => {
     const token = query.validationToken;
     if (typeof token === 'string' && token.length > 0) {
-      await appendLog('info', 'Webhook validation via POST', { validationToken: token });
-      return new Response(token, { status: 200, headers: { 'Content-Type': 'text/plain' } });
+      await appendLog('info', 'Webhook validation via POST', {validationToken: token});
+      return new Response(token, {status: 200, headers: {'Content-Type': 'text/plain'}});
     }
 
     Promise.resolve(handleWebhookPayload(body)).catch((error) => {
@@ -419,7 +419,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       void appendLog('error', 'Webhook processing failed', normalized.details);
     });
 
-    return new Response(null, { status: 202 });
+    return new Response(null, {status: 202});
   }, {
     detail: {
       tags: ['Webhook'],
@@ -428,7 +428,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
       description: '接收 Microsoft Graph 推送事件；验证请求时回显 token，正常事件异步处理并返回 202。',
     },
   })
-  .onError(async ({ code, error, path }) => {
+  .onError(async ({code, error, path}) => {
     const requestId = randomUUID();
     const errorMessage = typeof error === 'object' && error !== null && 'message' in error
       ? String((error as { message: unknown }).message)
@@ -441,7 +441,7 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
           code: 'UNAUTHORIZED',
           message: 'Missing or invalid auth. Use dashboard session cookie or Authorization: Bearer <APP_PASSWORD|CRON_SECRET>.',
         }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } },
+        {status: 401, headers: {'Content-Type': 'application/json'}},
       );
     }
 
@@ -460,6 +460,6 @@ Authorization: Bearer <APP_PASSWORD or CRON_SECRET>
         code: normalized.code,
         message: normalized.message,
       }),
-      { status: normalized.status, headers: { 'Content-Type': 'application/json' } },
+      {status: normalized.status, headers: {'Content-Type': 'application/json'}},
     );
   });

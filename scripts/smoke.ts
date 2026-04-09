@@ -51,7 +51,7 @@ async function requestJson(url: string, init?: RequestInit, extraHeaders: Header
     // Keep raw text when response is not JSON.
   }
 
-  return { response, data };
+  return {response, data};
 }
 
 async function main() {
@@ -76,7 +76,7 @@ async function main() {
     `${base}/api/auth/login`,
     {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({password}),
     },
   );
 
@@ -90,19 +90,19 @@ async function main() {
   }
   console.log('[smoke] POST /api/auth/login OK');
 
-  const status = await requestJson(`${base}/api/status`, undefined, { Cookie: sessionCookie });
+  const status = await requestJson(`${base}/api/status`, undefined, {Cookie: sessionCookie});
   if (!status.response.ok) {
     throw new Error(`[smoke] GET /api/status failed: ${JSON.stringify(status.data)}`);
   }
   console.log('[smoke] GET /api/status OK');
 
-  const statusWithBearer = await requestJson(`${base}/api/status`, undefined, { Authorization: `Bearer ${password}` });
+  const statusWithBearer = await requestJson(`${base}/api/status`, undefined, {Authorization: `Bearer ${password}`});
   if (!statusWithBearer.response.ok) {
     throw new Error(`[smoke] GET /api/status with bearer token failed: ${JSON.stringify(statusWithBearer.data)}`);
   }
   console.log('[smoke] GET /api/status with bearer token OK');
 
-  const logs = await requestJson(`${base}/api/logs`, undefined, { Cookie: sessionCookie });
+  const logs = await requestJson(`${base}/api/logs`, undefined, {Cookie: sessionCookie});
   if (!logs.response.ok) {
     throw new Error(`[smoke] GET /api/logs failed: ${JSON.stringify(logs.data)}`);
   }

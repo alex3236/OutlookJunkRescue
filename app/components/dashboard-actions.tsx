@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/app/providers/language-provider';
+import { t } from '@/lib/i18n';
 
 type DashboardActionsProps = {
   outlookBound: boolean;
@@ -15,28 +17,33 @@ type ActionType =
   | 'renewAllSubscriptions'
   | 'reconcileTrash';
 
-const ACTION_LABELS: Record<ActionType, string> = {
-  bindOutlook: '绑定Outlook',
-  createSubscription: '创建订阅',
-  disconnectOutlook: '取消订阅并解绑',
-  renewAllSubscriptions: '续订全部订阅',
-  reconcileTrash: '整理垃圾箱',
-};
 
 export function DashboardActions({
                                    outlookBound,
                                    subscriptionCount,
                                  }: DashboardActionsProps) {
   const router = useRouter();
+  const {language} = useLanguage();
   const [busy, setBusy] = useState<ActionType | null>(null);
   const [message, setMessage] = useState('');
+
+  const getActionLabel = (action: ActionType): string => {
+    const labels: Record<ActionType, string> = {
+      bindOutlook: t(language, 'bindOutlook'),
+      createSubscription: t(language, 'createSubscription'),
+      disconnectOutlook: t(language, 'disconnectOutlook'),
+      renewAllSubscriptions: t(language, 'renewAllSubscriptions'),
+      reconcileTrash: t(language, 'reconcileTrash'),
+    };
+    return labels[action];
+  };
 
   const formatResponse = async (response: Response, action: ActionType) => {
     const text = await response.text().catch(() => '');
     const contentType = response.headers.get('content-type') || '';
 
     if (contentType.includes('application/json')) {
-      let data: any = null;
+      let data: any;
       try {
         data = text ? JSON.parse(text) : null;
       } catch {
@@ -46,56 +53,56 @@ export function DashboardActions({
       switch (action) {
         case 'createSubscription':
           if (data?.id) {
-            return `创建订阅成功：${data.id}`;
+            return t(language, 'createSubscriptionSuccess', data?.id);
           }
           break;
 
         case 'disconnectOutlook':
           if (data) {
-            return `已解绑 Outlook，删除订阅 ${data.deletedCount ?? 0} 个，失败 ${data.failedCount ?? 0} 个。`;
+            return t(language, 'disconnectSuccessFormat', data.deletedCount ?? 0, data.failedCount ?? 0);
           }
           break;
 
         case 'renewAllSubscriptions':
           if (Array.isArray(data)) {
-            const successCount = data.filter((item: any) => item?.ok).length;
-            const failedCount = data.length - successCount;
-            return `续订完成：成功 ${successCount} 个，失败 ${failedCount} 个。`;
+            const successCount = data?.filter((item: any) => item?.ok).length;
+            const failedCount = data?.length - successCount;
+            return t(language, 'renewSuccessFormat', successCount, failedCount);
           }
           break;
 
         case 'reconcileTrash':
           if (typeof data?.movedCount === 'number') {
-            return `已整理垃圾箱，移动 ${data.movedCount} 封邮件。`;
+            return t(language, 'reconcileSuccessFormat', data?.movedCount);
           }
           break;
       }
 
-      if (typeof data?.message === 'string' && data.message) {
-        return data.message;
+      if (typeof data?.message === 'string' && data?.message) {
+        return data?.message;
       }
 
-      if (typeof data?.code === 'string' && data.code) {
-        return data.code;
+      if (typeof data?.code === 'string' && data?.code) {
+        return data?.code;
       }
 
       if (data?.ok === true) {
         switch (action) {
           case 'reconcileTrash':
-            return '垃圾箱整理完成。';
+            return t(language, 'trashOrganizingComplete');
           case 'renewAllSubscriptions':
-            return '已提交全部订阅的续订请求。';
+            return t(language, 'renewRequestSubmitted');
           case 'createSubscription':
-            return '创建订阅完成。';
+            return t(language, 'createSubscriptionComplete');
           case 'disconnectOutlook':
-            return '已解绑 Outlook。';
+            return t(language, 'disconnectedOutlook');
           default:
             break;
         }
       }
     }
 
-    return text || `${ACTION_LABELS[action]} completed.`;
+    return text || t(language, 'actionCompleteFormat', getActionLabel(action));
   };
 
   const run = async (
@@ -111,19 +118,19 @@ export function DashboardActions({
 
       if (!response.ok) {
         const body = await formatResponse(response, action);
-        setMessage(`${ACTION_LABELS[action]} 失败: ${body}`);
+        setMessage(`${t(language, 'actionFailedFormat', getActionLabel(action))}: ${body}`);
         return;
       }
 
       const body = await formatResponse(response, action);
       setMessage(
-        `${ACTION_LABELS[action]} 完成: ${body.slice(0, 260)}${
+        `${t(language, 'actionCompleteFormat', getActionLabel(action))}: ${body.slice(0, 260)}${
           body.length > 260 ? '...' : ''
         }`,
       );
       router.refresh();
     } catch {
-      setMessage(`${ACTION_LABELS[action]} 因网络原因失败.`);
+      setMessage(t(language, 'networkErrorActionFormat', getActionLabel(action)));
     } finally {
       setBusy(null);
     }
@@ -140,7 +147,7 @@ export function DashboardActions({
             }}
             disabled={Boolean(busy)}
           >
-            {ACTION_LABELS.bindOutlook}
+            {getActionLabel('bindOutlook')}
           </button>
         ) : null}
 
@@ -154,7 +161,7 @@ export function DashboardActions({
             }
             disabled={Boolean(busy)}
           >
-            {ACTION_LABELS.createSubscription}
+            {getActionLabel('createSubscription')}
           </button>
         ) : null}
 
@@ -168,7 +175,7 @@ export function DashboardActions({
             }
             disabled={Boolean(busy)}
           >
-            {ACTION_LABELS.disconnectOutlook}
+            {getActionLabel('disconnectOutlook')}
           </button>
         ) : null}
 
@@ -182,7 +189,7 @@ export function DashboardActions({
             }
             disabled={Boolean(busy)}
           >
-            {ACTION_LABELS.renewAllSubscriptions}
+            {getActionLabel('renewAllSubscriptions')}
           </button>
         ) : null}
 
@@ -196,12 +203,12 @@ export function DashboardActions({
             }
             disabled={Boolean(busy)}
           >
-            手动整理垃圾箱
+            {getActionLabel('reconcileTrash')}
           </button>
         ) : null}
       </div>
 
-      {busy ? <p className="muted">执行中：{ACTION_LABELS[busy]}</p> : null}
+      {busy ? <p className="muted">{t(language, 'actionExecutingFormat', getActionLabel(busy))}</p> : null}
       {message ? <pre>{message}</pre> : null}
     </div>
   );

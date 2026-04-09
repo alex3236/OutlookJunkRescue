@@ -51,7 +51,8 @@ async function main() {
   console.log(`[renew-loop] starting; target=${baseUrl}; interval=${intervalSeconds}s`);
   await runTick();
   scheduleNextTick();
-  await new Promise(() => {});
+  await new Promise(() => {
+  });
 }
 
 main().catch((error) => {

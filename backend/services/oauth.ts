@@ -32,8 +32,8 @@ export async function exchangeCodeForToken(code: string) {
     scope: scopes.join(' '),
   });
 
-  const { data } = await axios.post(`${authBase}/token`, form, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  const {data} = await axios.post(`${authBase}/token`, form, {
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     timeout: 20000,
   });
 
@@ -50,8 +50,8 @@ async function refreshAccessToken(refreshToken: string) {
     scope: scopes.join(' '),
   });
 
-  const { data } = await axios.post(`${authBase}/token`, form, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  const {data} = await axios.post(`${authBase}/token`, form, {
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     timeout: 20000,
   });
 

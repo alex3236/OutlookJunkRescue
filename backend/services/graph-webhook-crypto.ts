@@ -40,7 +40,7 @@ function decodeBase64(value: string, fieldName: string): Buffer {
   try {
     return Buffer.from(value, 'base64');
   } catch (error) {
-    throw new DecryptionError(`Invalid base64 in field "${fieldName}".`, { cause: error });
+    throw new DecryptionError(`Invalid base64 in field "${fieldName}".`, {cause: error});
   }
 }
 
@@ -57,7 +57,7 @@ function decryptDataKey(dataKeyBase64: string, privateKeyPem: string): Buffer {
       encryptedDataKey,
     );
   } catch (error) {
-    throw new DecryptionError('Failed to decrypt dataKey with private key.', { cause: error });
+    throw new DecryptionError('Failed to decrypt dataKey with private key.', {cause: error});
   }
 }
 
@@ -90,7 +90,7 @@ function decryptData(dataBase64: string, rawKey: Buffer): string {
     const plaintext = Buffer.concat([decipher.update(cipherText), decipher.final()]);
     return plaintext.toString('utf8');
   } catch (error) {
-    throw new DecryptionError('Failed to decrypt encrypted content data.', { cause: error });
+    throw new DecryptionError('Failed to decrypt encrypted content data.', {cause: error});
   }
 }
 
@@ -118,7 +118,7 @@ function parseJson<T>(text: string): T {
   try {
     return JSON.parse(text) as T;
   } catch (error) {
-    throw new DecryptionError('Decrypted plaintext is not valid JSON.', { cause: error });
+    throw new DecryptionError('Decrypted plaintext is not valid JSON.', {cause: error});
   }
 }
 

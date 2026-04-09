@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/app/providers/language-provider';
+import { t } from '@/lib/i18n';
 import type { LogEntry } from '@/backend/types/store';
 
 type Props = {
@@ -49,14 +51,16 @@ function isMailLog(log: LogEntry) {
   return typeof value.subject === 'string' || typeof value.sender === 'string';
 }
 
-function formatDateTime(value: string) {
+function formatDateTime(value: string, language: 'en' | 'zh' = 'en') {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  const locale = language === 'zh' ? 'zh-CN' : 'en-US';
+  return new Intl.DateTimeFormat(locale, {dateStyle: 'medium', timeStyle: 'short'}).format(date);
 }
 
-export function RecentActivityPanel({ logs }: Props) {
+export function RecentActivityPanel({logs}: Props) {
   const router = useRouter();
+  const {language} = useLanguage();
   const [mode, setMode] = useState<'logs' | 'mails'>('logs');
   const [displayLogs, setDisplayLogs] = useState(logs);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -88,20 +92,20 @@ export function RecentActivityPanel({ logs }: Props) {
       });
 
       if (!response.ok) {
-        setRefreshError(`加载日志失败：${response.status}`);
+        setRefreshError(`${t(language, 'loadingLogsFailed')}: ${response.status}`);
         return;
       }
 
       const nextLogs = (await response.json()) as LogEntry[];
       if (!Array.isArray(nextLogs)) {
-        setRefreshError('日志响应格式无效');
+        setRefreshError(t(language, 'invalidLogsFormat'));
         return;
       }
 
       setDisplayLogs(nextLogs);
       router.refresh();
     } catch (error) {
-      setRefreshError(error instanceof Error ? error.message : '刷新失败，请稍后再试。');
+      setRefreshError(error instanceof Error ? error.message : t(language, 'refreshFailed'));
     } finally {
       setIsRefreshing(false);
     }
@@ -110,7 +114,7 @@ export function RecentActivityPanel({ logs }: Props) {
   return (
     <section className="card card-wide">
       <div className="panel-toolbar">
-        <h2>活动</h2>
+        <h2>{t(language, 'activity')}</h2>
         <div className="panel-actions">
           <button
             type="button"
@@ -118,7 +122,7 @@ export function RecentActivityPanel({ logs }: Props) {
             onClick={refreshLogs}
             disabled={isRefreshing}
           >
-            {isRefreshing ? '刷新中...' : '刷新'}
+            {isRefreshing ? t(language, 'refreshing') : t(language, 'refresh')}
           </button>
 
           <div className="toggle-group" role="tablist" aria-label="Activity mode">
@@ -128,7 +132,7 @@ export function RecentActivityPanel({ logs }: Props) {
               onClick={() => setMode('logs')}
               aria-pressed={mode === 'logs'}
             >
-              所有日志
+              {t(language, 'allLogs')}
             </button>
             <button
               type="button"
@@ -136,7 +140,7 @@ export function RecentActivityPanel({ logs }: Props) {
               onClick={() => setMode('mails')}
               aria-pressed={mode === 'mails'}
             >
-              已移动邮件
+              {t(language, 'movedEmails')}
             </button>
           </div>
         </div>
@@ -146,7 +150,7 @@ export function RecentActivityPanel({ logs }: Props) {
 
       {mode === 'logs' ? (
         displayLogs.length === 0 ? (
-          <p className="muted">暂无日志。</p>
+          <p className="muted">{t(language, 'noLogs')}</p>
         ) : (
           <div className="log-list">
             {displayLogs.slice(0, 10).map((log) => {
@@ -157,13 +161,14 @@ export function RecentActivityPanel({ logs }: Props) {
                     {mailLog ? (
                       <span className="badge badge-success">MAIL</span>
                     ) : (
-                      <span className={`badge ${log.level === 'error' ? 'badge-error' : log.level === 'warn' ? 'badge-warn' : 'badge-muted'}`}>
+                      <span
+                        className={`badge ${log.level === 'error' ? 'badge-error' : log.level === 'warn' ? 'badge-warn' : 'badge-muted'}`}>
                         {log.level.toUpperCase()}
                       </span>
                     )}
                     <div className="log-content">
                       <strong>{mailLog ? `${getSender(log.extra)} | ${getSubject(log.extra)}` : log.message}</strong>
-                      <span className="muted">{formatDateTime(log.ts)}</span>
+                      <span className="muted">{formatDateTime(log.ts, language)}</span>
                     </div>
                   </div>
                 </article>
@@ -172,7 +177,7 @@ export function RecentActivityPanel({ logs }: Props) {
           </div>
         )
       ) : recentMails.length === 0 ? (
-        <p className="muted">暂无最近移动的垃圾邮件。</p>
+        <p className="muted">{t(language, 'noRecentMails')}</p>
       ) : (
         <div className="log-list">
           {recentMails.slice(0, 20).map((mail) => (
@@ -181,7 +186,7 @@ export function RecentActivityPanel({ logs }: Props) {
                 <span className="badge badge-success">MAIL</span>
                 <div className="log-content">
                   <strong>{`${mail.sender} | ${mail.subject}`}</strong>
-                  <span className="muted">{formatDateTime(mail.ts)}</span>
+                  <span className="muted">{formatDateTime(mail.ts, language)}</span>
                 </div>
               </div>
             </article>

@@ -46,7 +46,7 @@ export async function createJunkSubscription() {
       encryptionCertificate: cert.certBase64,
       encryptionCertificateId: cert.certId,
     },
-    headers: { 'Content-Type': 'application/json' },
+    headers: {'Content-Type': 'application/json'},
   });
 }
 
@@ -56,8 +56,8 @@ export async function renewSubscription(subscriptionId: string, minutes = 45) {
   return graphRequest<any>({
     method: 'PATCH',
     url: `${graphBase}/subscriptions/${subscriptionId}`,
-    data: { expirationDateTime: expiration },
-    headers: { 'Content-Type': 'application/json' },
+    data: {expirationDateTime: expiration},
+    headers: {'Content-Type': 'application/json'},
   });
 }
 
@@ -79,8 +79,8 @@ export async function moveMessageToInbox(messageId: string) {
   return graphRequest<any>({
     method: 'POST',
     url: `${graphBase}/me/messages/${encodeURIComponent(messageId)}/move`,
-    data: { destinationId: 'inbox' },
-    headers: { 'Content-Type': 'application/json' },
+    data: {destinationId: 'inbox'},
+    headers: {'Content-Type': 'application/json'},
   });
 }
 

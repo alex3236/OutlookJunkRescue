@@ -1,8 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '@/app/providers/language-provider';
+import { t } from '@/lib/i18n';
+import { LanguageSwitcher } from '@/app/components/language-switcher';
 
-export function PanelLogoutButton() {
+export function PanelActionButton() {
+  const {language} = useLanguage();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,16 +15,16 @@ export function PanelLogoutButton() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      const response = await fetch('/api/auth/logout', {method: 'POST'});
       if (!response.ok) {
-        setError('登出失败，请稍后重试。');
+        setError(t(language, 'logoutFailed'));
         return;
       }
 
       // Force a full refresh so server-rendered auth state updates immediately.
       window.location.reload();
     } catch {
-      setError('网络异常，暂时无法登出。');
+      setError(t(language, 'networkErrorLogout'));
     } finally {
       setPending(false);
     }
@@ -28,8 +32,9 @@ export function PanelLogoutButton() {
 
   return (
     <div className="hero-actions">
-      <button className="secondary" type="button" onClick={onLogout} disabled={pending}>
-        {pending ? '登出中...' : '面板登出'}
+      <LanguageSwitcher/>
+      <button className="secondary small" type="button" onClick={onLogout} disabled={pending}>
+        {pending ? t(language, 'logoutPending') : t(language, 'panelLogout')}
       </button>
       {error ? <span className="error">{error}</span> : null}
     </div>
