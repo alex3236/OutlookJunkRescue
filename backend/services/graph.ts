@@ -12,7 +12,7 @@ export async function graphRequest<T>(config: AxiosRequestConfig): Promise<T> {
       ...(config.headers || {}),
       Authorization: `Bearer ${token}`,
     },
-    timeout: config.timeout || 20000,
+    timeout: config.timeout || 120000,
   });
 
   return response.data as T;
