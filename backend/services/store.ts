@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
-import { env } from '@/backend/config/env';
-import { nowIso } from '@/backend/utils/time';
-import type { GraphWebhookCertificateState, LogLevel, StoreSchema } from '@/backend/types/store';
+import {randomUUID} from 'node:crypto';
+import {Pool} from 'pg';
+import {env} from '@/backend/config/env';
+import {nowIso} from '@/backend/utils/time';
+import type {GraphWebhookCertificateState, LogLevel, StoreSchema} from '@/backend/types/store';
 
 const MAX_LAST_NOTIFICATIONS = 50;
 let pool: Pool | null = null;
@@ -13,7 +13,7 @@ function sanitizeJson(value: unknown) {
   try {
     return JSON.parse(JSON.stringify(value)) as unknown;
   } catch {
-    return { note: 'unserializable_extra' };
+    return {note: 'unserializable_extra'};
   }
 }
 
@@ -46,33 +46,35 @@ function minimalNonErrorExtra(message: string, extra: unknown) {
 }
 
 function toDbExtra(level: LogLevel, message: string, extra: unknown) {
-  if (level === 'error') return sanitizeJson(extra);
+  if (level === 'error' || level === 'warn') return sanitizeJson(extra);
   return minimalNonErrorExtra(message, extra);
 }
 
 function getPool() {
   if (pool) return pool;
   const ssl = /neon\.tech/i.test(env.databaseUrl) || /sslmode=require/i.test(env.databaseUrl)
-    ? { rejectUnauthorized: false }
+    ? {rejectUnauthorized: false}
     : undefined;
-  pool = new Pool({ connectionString: env.databaseUrl, ssl });
+  pool = new Pool({connectionString: env.databaseUrl, ssl});
   return pool;
 }
 
 async function upsertKvJson(key: string, value: unknown) {
   await getPool().query(
     `
-      INSERT INTO app_kv (key, value, updated_at)
-      VALUES ($1, $2::jsonb, NOW())
-      ON CONFLICT (key)
-      DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+        INSERT INTO app_kv (key, value, updated_at)
+        VALUES ($1, $2::jsonb, NOW()) ON CONFLICT (key)
+      DO
+        UPDATE SET value = EXCLUDED.value, updated_at = NOW()
     `,
     [key, JSON.stringify(sanitizeJson(value))],
   );
 }
 
 async function getKvJson<T>(key: string, fallback: T): Promise<T> {
-  const { rows } = await getPool().query<{ value: T }>(`SELECT value FROM app_kv WHERE key = $1`, [key]);
+  const {rows} = await getPool().query<{ value: T }>(`SELECT value
+                                                      FROM app_kv
+                                                      WHERE key = $1`, [key]);
   if (!rows[0]) return fallback;
   return rows[0].value;
 }
@@ -81,38 +83,81 @@ async function ensureReady() {
   if (!initPromise) {
     initPromise = (async () => {
       await getPool().query(`
-        CREATE TABLE IF NOT EXISTS app_kv (
-          key TEXT PRIMARY KEY,
-          value JSONB NOT NULL,
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
+          CREATE TABLE IF NOT EXISTS app_kv
+          (
+              key
+              TEXT
+              PRIMARY
+              KEY,
+              value
+              JSONB
+              NOT
+              NULL,
+              updated_at
+              TIMESTAMPTZ
+              NOT
+              NULL
+              DEFAULT
+              NOW
+          (
+          )
+              )
       `);
 
       await getPool().query(`
-        CREATE TABLE IF NOT EXISTS activity_logs (
-          id UUID PRIMARY KEY,
-          ts TIMESTAMPTZ NOT NULL,
-          level TEXT NOT NULL,
-          message TEXT NOT NULL,
-          extra JSONB
-        )
+          CREATE TABLE IF NOT EXISTS activity_logs
+          (
+              id
+              UUID
+              PRIMARY
+              KEY,
+              ts
+              TIMESTAMPTZ
+              NOT
+              NULL,
+              level
+              TEXT
+              NOT
+              NULL,
+              message
+              TEXT
+              NOT
+              NULL,
+              extra
+              JSONB
+          )
       `);
 
       await getPool().query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_ts ON activity_logs (ts DESC)`);
 
       await getPool().query(`
-        CREATE TABLE IF NOT EXISTS processed_messages (
-          message_id TEXT PRIMARY KEY,
-          ts TIMESTAMPTZ NOT NULL
-        )
+          CREATE TABLE IF NOT EXISTS processed_messages
+          (
+              message_id
+              TEXT
+              PRIMARY
+              KEY,
+              ts
+              TIMESTAMPTZ
+              NOT
+              NULL
+          )
       `);
 
       await getPool().query(`
-        CREATE TABLE IF NOT EXISTS last_notifications (
-          id BIGSERIAL PRIMARY KEY,
-          ts TIMESTAMPTZ NOT NULL,
-          payload JSONB
-        )
+          CREATE TABLE IF NOT EXISTS last_notifications
+          (
+              id
+              BIGSERIAL
+              PRIMARY
+              KEY,
+              ts
+              TIMESTAMPTZ
+              NOT
+              NULL,
+              payload
+              JSONB
+          )
       `);
 
       const createdAt = await getKvJson<string | null>('createdAt', null);
@@ -132,7 +177,10 @@ export async function readStore(): Promise<StoreSchema> {
     getKvJson<string>('createdAt', nowIso()),
     getOAuthStore(),
     getSubscriptionsStore(),
-    getPool().query<{ message_id: string; ts: string }>('SELECT message_id, ts FROM processed_messages ORDER BY ts DESC LIMIT 2000'),
+    getPool().query<{
+      message_id: string;
+      ts: string
+    }>('SELECT message_id, ts FROM processed_messages ORDER BY ts DESC LIMIT 2000'),
     getLastNotifications(),
     getActivityLogs(),
   ]);
@@ -170,13 +218,13 @@ export async function saveSubscriptionsStore(subscriptions: StoreSchema['subscri
 
 export async function getProcessedMessageCount() {
   await ensureReady();
-  const { rows } = await getPool().query<{ count: string }>('SELECT COUNT(*)::text AS count FROM processed_messages');
+  const {rows} = await getPool().query<{ count: string }>('SELECT COUNT(*)::text AS count FROM processed_messages');
   return Number(rows[0]?.count || '0');
 }
 
 export async function getLastNotifications(limit = MAX_LAST_NOTIFICATIONS) {
   await ensureReady();
-  const { rows } = await getPool().query<{ ts: string; payload: unknown }>(
+  const {rows} = await getPool().query<{ ts: string; payload: unknown }>(
     'SELECT ts, payload FROM last_notifications ORDER BY ts DESC LIMIT $1',
     [limit],
   );
@@ -185,7 +233,7 @@ export async function getLastNotifications(limit = MAX_LAST_NOTIFICATIONS) {
 
 export async function getActivityLogs(limit = 300) {
   await ensureReady();
-  const { rows } = await getPool().query<{ id: string; ts: string; level: LogLevel; message: string; extra: unknown }>(
+  const {rows} = await getPool().query<{ id: string; ts: string; level: LogLevel; message: string; extra: unknown }>(
     'SELECT id, ts, level, message, extra FROM activity_logs ORDER BY ts DESC LIMIT $1',
     [limit],
   );
@@ -224,13 +272,15 @@ export async function appendLog(level: LogLevel, message: string, extra: unknown
 
   await getPool().query(
     `
-      INSERT INTO activity_logs (id, ts, level, message, extra)
-      VALUES ($1::uuid, $2::timestamptz, $3, $4, $5::jsonb)
+        INSERT INTO activity_logs (id, ts, level, message, extra)
+        VALUES ($1::uuid, $2::timestamptz, $3, $4, $5::jsonb)
     `,
     [entry.id, entry.ts, entry.level, entry.message, JSON.stringify(entry.extra)],
   );
 
-  await getPool().query(`DELETE FROM activity_logs WHERE ts < NOW() - ($1::text || ' days')::interval`, [env.logRetentionDays]);
+  await getPool().query(`DELETE
+                         FROM activity_logs
+                         WHERE ts < NOW() - ($1::text || ' days')::interval`, [env.logRetentionDays]);
 
   const printer = level === 'error' ? console.error : console.log;
   printer(`[${entry.ts}] [${level}] ${message}`, extra ?? '');
@@ -242,20 +292,24 @@ export async function rememberProcessedMessage(messageId: string) {
   await ensureReady();
   await getPool().query(
     `
-      INSERT INTO processed_messages (message_id, ts)
-      VALUES ($1, $2::timestamptz)
-      ON CONFLICT (message_id)
-      DO UPDATE SET ts = EXCLUDED.ts
+        INSERT INTO processed_messages (message_id, ts)
+        VALUES ($1, $2::timestamptz) ON CONFLICT (message_id)
+      DO
+        UPDATE SET ts = EXCLUDED.ts
     `,
     [messageId, nowIso()],
   );
 
-  await getPool().query(`DELETE FROM processed_messages WHERE ts < NOW() - INTERVAL '7 days'`);
+  await getPool().query(`DELETE
+                         FROM processed_messages
+                         WHERE ts < NOW() - INTERVAL '7 days'`);
 }
 
 export async function wasProcessedRecently(messageId: string, withinMinutes = 60 * 24) {
   await ensureReady();
-  const { rows } = await getPool().query<{ ts: string }>('SELECT ts FROM processed_messages WHERE message_id = $1', [messageId]);
+  const {rows} = await getPool().query<{
+    ts: string
+  }>('SELECT ts FROM processed_messages WHERE message_id = $1', [messageId]);
   const ts = rows[0]?.ts;
   if (!ts) return false;
   const ageMs = Date.now() - new Date(ts).getTime();
@@ -264,20 +318,21 @@ export async function wasProcessedRecently(messageId: string, withinMinutes = 60
 
 export async function pushLastNotification(payload: unknown) {
   await ensureReady();
-  await getPool().query(`INSERT INTO last_notifications (ts, payload) VALUES ($1::timestamptz, $2::jsonb)`, [
+  await getPool().query(`INSERT INTO last_notifications (ts, payload)
+                         VALUES ($1::timestamptz, $2::jsonb)`, [
     nowIso(),
     JSON.stringify(sanitizeJson(payload)),
   ]);
 
   await getPool().query(
     `
-      DELETE FROM last_notifications
-      WHERE id NOT IN (
-        SELECT id
+        DELETE
         FROM last_notifications
-        ORDER BY ts DESC
-        LIMIT $1
-      )
+        WHERE id NOT IN (SELECT id
+                         FROM last_notifications
+                         ORDER BY ts DESC
+            LIMIT $1
+            )
     `,
     [MAX_LAST_NOTIFICATIONS],
   );

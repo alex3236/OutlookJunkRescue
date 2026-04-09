@@ -34,7 +34,7 @@ function createCertificate(): GraphWebhookCertificate {
   return {
     certId: randomUUID().replace(/-/g, ''),
     certBase64: normalizeCertToBase64(pems.cert),
-    privateKeyPem: pems.private,
+    privateKeyPem: pems.private.replace(/\r/g, ''),
     notAfter: new Date(parsed.validTo).toISOString(),
     createdAt: nowIso(),
   };
