@@ -207,7 +207,7 @@ export async function handleWebhookPayload(payload: any) {
   await pushLastNotification(payload);
 
   const items = Array.isArray(payload?.value) ? payload.value : [];
-  await appendLog('info', 'Webhook received notifications', { count: items.length });
+  await appendLog('info', 'Webhook received notifications', items);
 
   for (const item of items) {
     if (item?.clientState !== env.webhookClientState) {
