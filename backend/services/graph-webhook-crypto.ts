@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import { getPrivateKeyForCertId } from '@/backend/services/graph-webhook-certificate';
-import { appendLog } from '@/backend/services/store';
 
 type EncryptedContent = {
   data?: string;
@@ -138,16 +137,6 @@ function assertEncryptedContent(
     throw new DecryptionError('Missing encryptedContent.encryptionCertificateId.');
   }
 }
-
-function sanitizeResourceForLog(resource: DecryptedMailResource) {
-  return {
-    id: resource.id,
-    subjectLength: resource.subject?.length ?? 0,
-    fromAddress: resource.from?.emailAddress?.address,
-    receivedDateTime: resource.receivedDateTime,
-  };
-}
-
 export async function decryptNotificationResource(
   item: NotificationItem,
 ): Promise<DecryptedMailResource | null> {
@@ -168,13 +157,5 @@ export async function decryptNotificationResource(
   }
 
   const plaintext = decryptData(encrypted.data, rawKey);
-  const resource = parseJson<DecryptedMailResource>(plaintext);
-
-  await appendLog('info', 'Decrypted notification resource.', {
-    itemId: item.id,
-    certificateId: encrypted.encryptionCertificateId,
-    resource: sanitizeResourceForLog(resource),
-  });
-
-  return resource;
+  return parseJson<DecryptedMailResource>(plaintext);
 }

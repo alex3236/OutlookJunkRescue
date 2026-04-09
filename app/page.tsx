@@ -78,7 +78,7 @@ function isDatabaseError(error: any): boolean {
 }
 
 export default async function HomePage({searchParams}: PageProps) {
-  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const resolvedSearchParams = await searchParams;
   const language = detectPreferredLanguage();
 
   try {

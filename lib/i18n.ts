@@ -103,8 +103,8 @@ export const translations = {
     renewSuccessFormat: (success: number, failed: number) =>
       `Renew complete: ${success} successful, ${failed} failed.`,
     reconcileSuccessFormat: (count: number) => `Organized trash, moved ${count} emails.`,
-    actionCompleteFormat: (action: string) => `${action} complete.`,
-    actionFailedFormat: (action: string) => `${action} failed.`,
+    actionCompleteFormat: (action: string) => `${action} done`,
+    actionFailedFormat: (action: string) => `${action} failed`,
     actionExecutingFormat: (action: string) => `Executing: ${action}`,
     networkErrorActionFormat: (action: string) => `${action} failed due to network issue.`,
     trashOrganizingComplete: 'Trash organizing complete.',
@@ -228,8 +228,8 @@ export const translations = {
     renewSuccessFormat: (success: number, failed: number) =>
       `续订完成：成功 ${success} 个，失败 ${failed} 个。`,
     reconcileSuccessFormat: (count: number) => `已整理垃圾箱，移动 ${count} 封邮件。`,
-    actionCompleteFormat: (action: string) => `${action} 完成。`,
-    actionFailedFormat: (action: string) => `${action} 失败。`,
+    actionCompleteFormat: (action: string) => `${action} 完成`,
+    actionFailedFormat: (action: string) => `${action} 失败`,
     actionExecutingFormat: (action: string) => `执行中：${action}`,
     networkErrorActionFormat: (action: string) => `${action} 因网络原因失败。`,
     trashOrganizingComplete: '垃圾箱整理完成。',
